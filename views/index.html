@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>THREEJS+BIM+GIS</title>
+	</head>
+	<link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+	<script src="https://mrdoob.github.io/three.js/build/three.js"></script>
+	<script src="https://mrdoob.github.io/three.js/examples/js/controls/TrackballControls.js"></script>
+	<script src="https://mrdoob.github.io/three.js/examples/js/controls/OrbitControls.js"></script>
+	<script src="https://mrdoob.github.io/three.js/examples/js/renderers/Projector.js"></script>
+	<script src="https://mrdoob.github.io/three.js/examples/js/libs/stats.min.js"></script>
+	<script src="/js/jquery-3.2.1.min.js"></script>
+	<script src="/js/app.js"></script>
+	<style type="text/css">
+		div#BIMContainer{
+			height:800px;
+		}
+	</style>
+	<body>
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-sm-9">
+					<div id="BIMContainer"></div>
+				</div>
+				<div class="col-sm-3">
+					<div id="msg"></div>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				BIMX.init('http://localhost:3000/models/rac_basic_sample_project.rvt.js');
+				BIMX.animate();
+			});
+		</script>
+	</body>
+</html>
