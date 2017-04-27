@@ -16,8 +16,8 @@
         $('body').append( BIMX.stats.domElement );
 
         // set up renderer
-        BIMX.renderer = new THREE.WebGLRenderer( { alpha: 1, antialias: true, clearColor: 0xffffff }  );
-        BIMX.renderer.setSize( $('div#BIMContainer').innerWidth(), $('div#BIMContainer').innerHeight() );
+        BIMX.renderer = new THREE.WebGLRenderer( { alpha: true, antialias: true }  );
+        BIMX.renderer.setSize( $('div#BIMContainer').width(), $('div#BIMContainer').height() );
         BIMX.renderer.shadowMapEnabled = true;
         $('div#BIMContainer').append( BIMX.renderer.domElement );
 
@@ -25,7 +25,7 @@
         BIMX.scene = new THREE.Scene();
 
         // set up camera
-        BIMX.camera = new THREE.PerspectiveCamera( 40, $('div#BIMContainer').innerWidth() / $('div#BIMContainer').innerHeight(), 1, 10000000000 );
+        BIMX.camera = new THREE.PerspectiveCamera( 40, $('div#BIMContainer').width() / $('div#BIMContainer').height(), 1, 10000000000 );
         BIMX.camera.position.set( 150000, 150000, 150000 );
 
         // set up controls
@@ -79,12 +79,16 @@
         }
 
 
-        var vector = new THREE.Vector3( ( event.clientX / $('div#BIMContainer').innerWidth() ) * 2 - 1, - ( event.clientY / $('div#BIMContainer').innerHeight() ) * 2 + 1, 0.5 );
+        var vector = new THREE.Vector3( ( event.clientX / $('div#BIMContainer').width() ) * 2 - 1, - ( event.clientY / $('div#BIMContainer').height() ) * 2 + 1, 0.5 );
         BIMX.projector.unprojectVector( vector, BIMX.camera );
 
 
-        var raycaster = new THREE.Raycaster( BIMX.camera.position, vector.sub( BIMX.camera.position ).normalize() );
-        var intersects = raycaster.intersectObjects( BIMX.targetList );
+        //var raycaster = new THREE.Raycaster( BIMX.camera.position, vector.sub( BIMX.camera.position ).normalize() );
+        //var intersects = raycaster.intersectObjects( BIMX.targetList );
+        var raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(event.clientX / $('div#BIMContainer').width() * 2 - 1,
+         -event.clientY / $('div#BIMContainer').height() * 2 + 1), BIMX.camera);
+        var intersects = raycaster.intersectObjects(BIMX.targetList);
 
         if ( intersects.length > 0 ) {
 
@@ -183,7 +187,23 @@
 
         var loader = new THREE.ObjectLoader();
         loader.load( fname, function( result ){
+        	//result.position.z = 10000;
             BIMX.scene = result;
+            BIMX.scene.children.forEach(function(obj3d){
+            	if(obj3d instanceof THREE.Object3D){
+            		obj3d.children.forEach(function(mesh){
+            			if(mesh instanceof THREE.Mesh){
+            				if(mesh.name.indexOf('TopographySurface') != 1){
+            					var finalGeo = mesh.geometry;
+            					finalGeo.mergeVertices();
+            					var subdivs = 0;
+            					var modifier = new THREE.SubdivisionModifier(subdivs);
+            					modifier.modify(finalGeo);
+            				}
+            			}
+            		});
+            	}
+            });
 
             // lights
             BIMX.scene.add( new THREE.AmbientLight( 0x444444 ) );
@@ -197,23 +217,27 @@
 
 
             // load earth
-            var textureLoader = new THREE.TextureLoader();
-            textureLoader.load('http://localhost:3000/textures/land_ocean_ice_cloud_2048.jpg', function(texture){
-                var geometry = new THREE.SphereGeometry(6371000000, 200, 200);
-                var material = new THREE.MeshBasicMaterial({map: texture, overdraw: 0.5});
-                var mesh = new THREE.Mesh(geometry, material);
-                BIMX.scene.add(mesh);
-            });
+            // var textureLoader = new THREE.TextureLoader();
+            // textureLoader.load('http://localhost:3000/textures/land_ocean_ice_cloud_2048.jpg', function(texture){
+            //     var geometry = new THREE.SphereGeometry(6371000000, 200, 200);
+            //     var material = new THREE.MeshBasicMaterial({map: texture, overdraw: 0.5});
+            //     var mesh = new THREE.Mesh(geometry, material);
+            //     BIMX.scene.add(mesh);
+            // });
 
             // ground box
-            var geometry = new THREE.BoxGeometry( 20000, 100, 20000 );
-            var material = new THREE.MeshBasicMaterial( { color: 0xaaaaaa } );
-            var mesh = new THREE.Mesh( geometry, material );
-            mesh.position.set( 0, -10, 0 );
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            BIMX.scene.add( mesh );
-            //console.log(BIMX.scene);
+            var geometry = new THREE.BoxGeometry( 2000000, 0.0001, 2000000 );
+            var textureLoader = new THREE.TextureLoader();
+            var material;
+            textureLoader.load('http://localhost:3000/textures/land_ocean_ice_cloud_2048.jpg', function(texture){
+            	material = new THREE.MeshBasicMaterial({map: texture, overdraw: 0.5});
+            	var mesh = new THREE.Mesh( geometry, material );
+	            mesh.castShadow = true;
+	            mesh.receiveShadow = true;
+	            mesh.position.y = -10000;
+	            BIMX.scene.add(mesh);
+	            console.log(BIMX.scene);
+            });
 
             //call compute function
             BIMX.computeNormalsAndFaces();
